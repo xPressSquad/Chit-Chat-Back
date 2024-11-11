@@ -1,5 +1,5 @@
-import { Controller, Post, UseGuards } from "@nestjs/common";
-import { OriginGuard } from "src/common/guards/origin.guard";
+import { Controller, HttpStatus, Post, UseGuards } from "@nestjs/common";
+import { OriginGuard } from "../common/guards/origin.guard";
 
 @Controller('auth')
 export class AuthController {
@@ -8,6 +8,9 @@ export class AuthController {
     @Post('create/user')
     @UseGuards(OriginGuard)
     createUser(){
-        return 'hello world';
+        return {
+            statusCode: HttpStatus.OK,
+            message: 'Hello'
+        };
     }
 }

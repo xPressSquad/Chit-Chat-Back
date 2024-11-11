@@ -2,7 +2,7 @@
 import { Controller, Get, Param, Delete, Inject, HttpStatus, HttpException, UseGuards } from '@nestjs/common';
 import { UserRepositoryInterface } from './interfaces/user.repository.interface';
 import { userDocument } from './user.schema';
-import { AuthGuard } from 'src/common/guards/auth.guard';
+import { AuthGuard } from '../common/guards/auth.guard';
 
 @Controller('users')
 export class UserController {

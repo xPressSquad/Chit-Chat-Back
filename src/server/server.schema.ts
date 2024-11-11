@@ -43,4 +43,6 @@ export class Server extends Document {
   type: ServerType; // e.g., duo, group
 }
 
+
+export type serverDocument = Server & Document;
 export const ServerSchema = SchemaFactory.createForClass(Server);

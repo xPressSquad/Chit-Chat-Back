@@ -2,11 +2,11 @@
 import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
-import { User } from './user.schema';
+import { User, userDocument } from './user.schema';
 
 @Injectable()
 export class UserService {
-  constructor(@InjectModel(User.name) private userModel: Model<User>) {}
+  constructor(@InjectModel(User.name) private userModel: Model<userDocument>) {}
 
   async findAll(): Promise<User[]> {
     return this.userModel.find().exec();
@@ -16,7 +16,12 @@ export class UserService {
     return this.userModel.findById(id).exec();
   }
 
-  async remove(id: string): Promise<void> {
-    await this.userModel.findByIdAndDelete(id).exec();
+  async create(userData: Partial<User>): Promise<User> {
+    const user = new this.userModel(userData);
+    return user.save();
+  }
+
+  async remove(id: string): Promise<User> {
+    return this.userModel.findByIdAndDelete(id);
   }
 }

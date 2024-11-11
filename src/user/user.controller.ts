@@ -4,6 +4,7 @@ import { UserRepositoryInterface } from './interfaces/user.repository.interface'
 import { userDocument } from './user.schema';
 import { AuthGuard } from '../common/guards/auth.guard';
 
+
 @Controller('users')
 export class UserController {
   constructor(@Inject('UserRepositoryInterface') private readonly userRepository: UserRepositoryInterface) {}

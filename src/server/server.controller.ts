@@ -1,23 +1,29 @@
 // src/server/server.controller.ts
-import { Controller, Get, Param, Delete } from '@nestjs/common';
+import { Controller, Get, Post, Body, Param, Delete } from '@nestjs/common';
 import { ServerService } from './server.service';
+import { Server } from './server.schema';
 
 @Controller('servers')
 export class ServerController {
   constructor(private readonly serverService: ServerService) {}
 
   @Get()
-  findAll() {
+  async findAll(): Promise<Server[]> {
     return this.serverService.findAll();
   }
 
   @Get(':id')
-  findOne(@Param('id') id: string) {
+  async findOne(@Param('id') id: string): Promise<Server> {
     return this.serverService.findOne(id);
   }
 
+  @Post()
+  async create(@Body() createServerDto: Partial<Server>): Promise<Server> {
+    return this.serverService.create(createServerDto);
+  }
+
   @Delete(':id')
-  remove(@Param('id') id: string) {
+  async remove(@Param('id') id: string): Promise<Server> {
     return this.serverService.remove(id);
   }
 }

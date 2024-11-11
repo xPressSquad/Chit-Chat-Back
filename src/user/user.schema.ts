@@ -1,14 +1,14 @@
-// src/user/user.schema.ts
+// src/user/schemas/user.schema.ts
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import { Document } from 'mongoose';
 
 enum UserStatus {
-  ONLINE = 'online',
-  OFFLINE = 'offline',
+  OFFLINE= 'offline',
+  ONLINE= 'online'
 }
 
 @Schema()
 export class User extends Document {
+
   @Prop({ required: true })
   name: string;
 

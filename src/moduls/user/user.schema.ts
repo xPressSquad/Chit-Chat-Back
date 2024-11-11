@@ -9,21 +9,21 @@ enum UserStatus {
 
 @Schema()
 export class User extends Document {
-  @Prop()
+  @Prop({ required: true })
   name: string;
 
-  @Prop()
+  @Prop({ required: true, unique: true })
   email: string;
 
-  @Prop()
+  @Prop({ required: true })
   password: string;
 
   @Prop()
-  avarar: string;
+  avatar: string; // Fixed typo from "avarar" to "avatar"
 
   @Prop({ enum: UserStatus, default: UserStatus.OFFLINE })
-  status: UserStatus
-
+  status: UserStatus;
 }
 
+export type userDocument = User & Document;
 export const UserSchema = SchemaFactory.createForClass(User);

@@ -1,13 +1,15 @@
 // src/user/user.controller.ts
-import { Controller, Get, Param, Delete, Inject, HttpStatus, HttpException } from '@nestjs/common';
+import { Controller, Get, Param, Delete, Inject, HttpStatus, HttpException, UseGuards } from '@nestjs/common';
 import { UserRepositoryInterface } from './interfaces/user.repository.interface';
 import { userDocument } from './user.schema';
+import { AuthGuard } from 'src/common/guards/auth.guard';
 
 @Controller('users')
 export class UserController {
   constructor(@Inject('UserRepositoryInterface') private readonly userRepository: UserRepositoryInterface) {}
 
   @Get('/get/all')
+  @UseGuards(AuthGuard)
   async findAll(): Promise<{ statusCode: number; data: userDocument[] }> {
     try{
       const users = await this.userRepository.getAllUsers();

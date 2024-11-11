@@ -1,26 +1,35 @@
-// src/server/server.schema.ts
+// src/server/schemas/server.schema.ts
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import { Document } from 'mongoose';
+import { HydratedDocument } from 'mongoose';
+import * as mongoose from 'mongoose';
+import { User } from '../user/user.schema';
+
+export type ServerDocument = HydratedDocument<Server>;
 
 @Schema()
-export class Server extends Document {
-  @Prop()
+export class Server {
+  @Prop({ required: true })
   name: string;
 
   @Prop()
   cover: string;
 
-  @Prop()
-  admin: string;
+  @Prop({ type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true })
+  admin: User;
 
-  @Prop([String])
-  members: string[];
+  @Prop([
+    {
+      user_id: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
+      status: { type: String, enum: ['online', 'offline'], default: 'offline' },
+    },
+  ])
+  users: Array<{ user_id: User; status: string }>;
 
   @Prop()
-  visibility: string; // e.g., 'public', 'private'
+  visibility: boolean;
 
-  @Prop()
-  type: string; // e.g., duo, group
+  @Prop({ enum: ['duo', 'group'], default: 'group' })
+  type: string;
 }
 
 export const ServerSchema = SchemaFactory.createForClass(Server);

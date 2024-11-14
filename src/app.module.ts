@@ -1,11 +1,9 @@
+// app.module.ts
 import { Module } from '@nestjs/common';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { ConfigModule } from '@nestjs/config';
-import { MongooseModule } from '@nestjs/mongoose';
-import { TestController } from './test/test.controller';
-import { HhController } from './hh/hh.controller';
-import { TestController } from './test/test.controller';
+import { UserModule } from './user/user.module';
 
 @Module({
   imports: [
@@ -13,10 +11,9 @@ import { TestController } from './test/test.controller';
       envFilePath: '.env',
       isGlobal: true,
     }),
-    MongooseModule.forRoot(process.env.DB_URI),
+    UserModule,
   ],
-  controllers: [AppController, TestController, HhController],
+  controllers: [AppController],
   providers: [AppService],
 })
-
 export class AppModule {}

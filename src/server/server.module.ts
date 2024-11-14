@@ -6,8 +6,11 @@ import { ServerService } from './server.service';
 import { ServerController } from './server.controller';
 
 @Module({
-  imports: [MongooseModule.forFeature([{ name: Server.name, schema: ServerSchema }])],
+  imports: [
+    MongooseModule.forFeature([{ name: Server.name, schema: ServerSchema }]),
+  ],
   providers: [ServerService],
   controllers: [ServerController],
+  exports: [ServerService],
 })
 export class ServerModule {}

@@ -1,17 +1,20 @@
-// src/friend/friend.schema.ts
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import { Document } from 'mongoose';
+import { HydratedDocument } from 'mongoose';
+import * as mongoose from 'mongoose';
+import { User } from '../user/user.schema';
+
+export type FriendDocument = HydratedDocument<Friend>;
 
 @Schema()
-export class Friend extends Document {
-  @Prop()
-  userId: string;
+export class Friend {
+  @Prop({ type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true })
+  user1: User;
 
-  @Prop()
-  friendId: string;
+  @Prop({ type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true })
+  user2: User;
 
-  @Prop()
-  status: string; // e.g., 'pending', 'accepted', 'blocked'
+  @Prop({ enum: ['approved', 'pending', 'deleted'], default: 'pending' })
+  status: string;
 }
 
 export const FriendSchema = SchemaFactory.createForClass(Friend);

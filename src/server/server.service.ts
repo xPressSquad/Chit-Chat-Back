@@ -1,128 +1,136 @@
-// src/server/server.service.ts
-import { Injectable, NotFoundException, InternalServerErrorException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  BadRequestException,
+} from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
-import { Server } from './server.schema';
+import { Server, ServerDocument } from './server.schema';
 import { CreateServerDto } from './dto/create-server.dto';
-import { Logger } from '@nestjs/common';
+import { UpdateServerDto } from './dto/update-server.dto';
+import * as fs from 'fs';
+import * as path from 'path';
 
 @Injectable()
 export class ServerService {
-  private readonly logger = new Logger(ServerService.name);
+  private readonly uploadsPath = path.join(process.cwd(), 'uploads', 'servers');
 
-  constructor(@InjectModel(Server.name) private serverModel: Model<Server>) {}
-
-  // Create a new server
-  async createServer(createServerDto: CreateServerDto): Promise<Server> {
-    try {
-      // Check if server with the same name already exists
-      const existingServer = await this.serverModel.findOne({ name: createServerDto.name }).exec();
-      if (existingServer) {
-        this.logger.error(`Server with name "${createServerDto.name}" already exists`);
-        throw new NotFoundException(`Server with name "${createServerDto.name}" already exists`);
-      }
-
-      // Create a new server
-      const newServer = new this.serverModel(createServerDto);
-      const savedServer = await newServer.save();
-      this.logger.log(`Created new server: ${savedServer._id}`);
-      return savedServer;
-    } catch (error) {
-      // Handle specific error types
-      if (error instanceof NotFoundException) {
-        throw error;
-      } else {
-        this.logger.error(`Unexpected error creating server: ${error.message}`);
-        throw new InternalServerErrorException('Error creating server');
-      }
+  constructor(@InjectModel(Server.name) private serverModel: Model<Server>) {
+    if (!fs.existsSync(this.uploadsPath)) {
+      fs.mkdirSync(this.uploadsPath, { recursive: true });
     }
   }
 
-  // Get all servers
-  async getAllServers(): Promise<Server[]> {
-    try {
-      return await this.serverModel.find().exec();
-    } catch (error) {
-      this.logger.error(`Error fetching servers: ${error.message}`);
-      throw new InternalServerErrorException('Error fetching servers');
+  async createServer(createServerDto: CreateServerDto, file?: Express.Multer.File): Promise<Server> {
+    const existingServer = await this.serverModel
+      .findOne({ name: createServerDto.name })
+      .exec();
+
+    if (existingServer) {
+      if (file) {
+        this.deleteFile(file.filename);
+      }
+      throw new BadRequestException(`Server with name "${createServerDto.name}" already exists`);
     }
+
+    const serverData = {
+      ...createServerDto,
+      cover: file ? `/uploads/servers/${file.filename}` : undefined,
+    };
+
+    const newServer = new this.serverModel(serverData);
+    return newServer.save();
   }
 
-  // Get a specific server by ID
+  async getAllServers(page: number = 1, limit: number = 10) {
+    const skip = (page - 1) * limit;
+    const [servers, total] = await Promise.all([
+      this.serverModel
+        .find()
+        .skip(skip)
+        .limit(limit)
+        .sort({ createdAt: -1 })
+        .exec(),
+      this.serverModel.countDocuments(),
+    ]);
+
+    return {
+      data: servers.map(server => ({
+        ...server.toJSON(),
+        cover: server.cover ? `${process.env.API_URL || 'http://localhost:3000'}${server.cover}` : null
+      })),
+      meta: {
+        total,
+        page,
+        limit,
+        totalPages: Math.ceil(total / limit),
+      },
+    };
+  }
+
   async getServerById(id: string): Promise<Server> {
+    const server = await this.serverModel.findById(id).exec();
+    if (!server) {
+      throw new NotFoundException(`Server with ID "${id}" not found`);
+    }
+    return {
+      ...server.toJSON(),
+      cover: server.cover ? `${process.env.API_URL || 'http://localhost:3000'}${server.cover}` : null
+    };
+  }
+
+  async updateServer(
+    id: string, 
+    updateServerDto: UpdateServerDto, 
+    file?: Express.Multer.File
+  ): Promise<Server> {
+    const server = await this.serverModel.findById(id).exec();
+    if (!server) {
+      if (file) {
+        this.deleteFile(file.filename);
+      }
+      throw new NotFoundException(`Server with ID "${id}" not found`);
+    }
+
+    if (file) {
+      if (server.cover) {
+        this.deleteFile(server.cover.split('/').pop());
+      }
+      updateServerDto.cover = `/uploads/servers/${file.filename}`;
+    }
+
+    const updatedServer = await this.serverModel
+      .findByIdAndUpdate(id, updateServerDto, { new: true })
+      .exec();
+
+    return {
+      ...updatedServer.toJSON(),
+      cover: updatedServer.cover ? `${process.env.API_URL || 'http://localhost:3000'}${updatedServer.cover}` : null
+    };
+  }
+
+  async deleteServer(id: string): Promise<Server> {
+    const server = await this.serverModel.findById(id).exec();
+    if (!server) {
+      throw new NotFoundException(`Server with ID "${id}" not found`);
+    }
+
+    if (server.cover) {
+      this.deleteFile(server.cover.split('/').pop());
+    }
+
+    return this.serverModel.findByIdAndDelete(id).exec();
+  }
+
+  private deleteFile(filename: string): void {
     try {
-      const server = await this.serverModel.findById(id).exec();
-      if (!server) {
-        this.logger.error(`Server with ID "${id}" not found`);
-        throw new NotFoundException(`Server with ID "${id}" not found`);
+      const fullPath = path.join(this.uploadsPath, filename);
+      if (fs.existsSync(fullPath)) {
+        fs.unlinkSync(fullPath);
       }
-      return server;
     } catch (error) {
-      if (error instanceof NotFoundException) {
-        throw error;
-      } else {
-        this.logger.error(`Error fetching server: ${error.message}`);
-        throw new InternalServerErrorException('Error fetching server');
-      }
+      console.error(`Error deleting file: ${error.message}`);
     }
   }
 }
-
-// import { Injectable, NotFoundException, InternalServerErrorException } from '@nestjs/common';
-// import { InjectModel } from '@nestjs/mongoose';
-// import { Model } from 'mongoose';
-// import { Server } from './server.schema';
-// import { CreateServerDto } from './dto/create-server.dto';
-
-// @Injectable()
-// export class ServerService {
-//   constructor(@InjectModel(Server.name) private serverModel: Model<Server>) {}
-
-//   // Create a new server
-//   async createServer(createServerDto: CreateServerDto): Promise<Server> {
-//     try {
-//       const { name, cover, admin, members, visibility, type } = createServerDto;
-//       const existingServer = await this.serverModel.findOne({ name }).exec();
-
-//       if (existingServer) {
-//         throw new NotFoundException(`Server with name "${name}" already exists`);
-//       }
-
-//       const newServer = new this.serverModel({ name, cover, admin, members, visibility, type });
-//       return await newServer.save();
-//     } catch (error) {
-//       if (error instanceof NotFoundException) {
-//         throw error;
-//       } else {
-//         throw new InternalServerErrorException('Error creating server');
-//       }
-//     }
-//   }
-
-//   // Get all servers
-//   async getAllServers(): Promise<Server[]> {
-//     try {
-//       return await this.serverModel.find().exec();
-//     } catch (error) {
-//       throw new InternalServerErrorException('Error fetching servers');
-//     }
-//   }
-
-//   // Get a specific server by ID
-//   async getServerById(id: string): Promise<Server> {
-//     try {
-//       const server = await this.serverModel.findById(id).exec();
-//       if (!server) {
-//         throw new NotFoundException(`Server with ID "${id}" not found`);
-//       }
-//       return server;
-//     } catch (error) {
-//       if (error instanceof NotFoundException) {
-//         throw error;
-//       } else {
-//         throw new InternalServerErrorException('Error fetching server');
-//       }
-//     }
-//   }
-// }
 

@@ -1,26 +1,36 @@
-// src/server/server.schema.ts
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import { Document } from 'mongoose';
+import { HydratedDocument } from 'mongoose';
+import { ServerVisibility, ServerType } from './dto/create-server.dto';
 
-@Schema()
-export class Server extends Document {
-  @Prop()
+export type ServerDocument = HydratedDocument<Server>;
+
+@Schema({ timestamps: true })
+export class Server {
+  @Prop({ required: true })
   name: string;
 
   @Prop()
-  cover: string;
+  cover?: string;
 
-  @Prop()
+  @Prop({ required: true })
   admin: string;
 
   @Prop([String])
-  members: string[];
+  members: string[] = [];
 
-  @Prop()
-  visibility: string; // e.g., 'public', 'private'
+  @Prop({ 
+    type: String, 
+    enum: ServerVisibility, 
+    default: ServerVisibility.PUBLIC 
+  })
+  visibility: ServerVisibility;
 
-  @Prop()
-  type: string; // e.g., duo, group
+  @Prop({ 
+    type: String, 
+    enum: ServerType, 
+    required: true 
+  })
+  type: ServerType;
 }
 
 export const ServerSchema = SchemaFactory.createForClass(Server);

@@ -1,44 +1,37 @@
-import { IsString, IsArray, IsOptional, IsEnum, IsNotEmpty } from 'class-validator';
+import { PartialType } from '@nestjs/mapped-types';
+import { CreateServerDto, ServerVisibility, ServerType } from './create-server.dto';
+import { IsString, IsArray, IsOptional, IsEnum } from 'class-validator';
 import { Transform } from 'class-transformer';
 
-// Enums for validation
-export enum ServerVisibility {
-  PUBLIC = 'public',
-  PRIVATE = 'private',
-}
-
-export enum ServerType {
-  DUO = 'duo',
-  GROUP = 'group',
-}
-
-export class CreateServerDto {
+export class UpdateServerDto extends PartialType(CreateServerDto) {
+  @IsOptional()
   @IsString()
-  @IsNotEmpty()
   @Transform(({ value }) => value?.trim())
-  name: string;
+  name?: string;
 
   @IsOptional()
   @IsString()
   cover?: string;
 
+  @IsOptional()
   @IsString()
-  @IsNotEmpty()
-  admin: string;
+  admin?: string;
 
   @IsOptional()
   @IsArray()
   @IsString({ each: true })
   @Transform(({ value }) => Array.isArray(value) ? value : [value])
-  members?: string[] = [];
+  members?: string[];
 
+  @IsOptional()
   @IsEnum(ServerVisibility, {
     message: 'Visibility must be either "public" or "private"'
   })
-  visibility: ServerVisibility;
+  visibility?: ServerVisibility;
 
+  @IsOptional()
   @IsEnum(ServerType, {
     message: 'Type must be either "duo" or "group"'
   })
-  type: ServerType;
+  type?: ServerType;
 }

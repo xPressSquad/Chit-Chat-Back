@@ -26,4 +26,10 @@ export class UserController {
   async remove(@Param('id') id: string): Promise<User> {
     return this.userService.remove(id);
   }
+
+  @Post('invite')
+  async inviteToServer(@Body() inviteToServerDto: InviteToServerDto) {
+    return this.userService.inviteToServer(inviteToServerDto.userId, inviteToServerDto.serverId);
+  }
+
 }

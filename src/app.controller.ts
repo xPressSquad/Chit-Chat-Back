@@ -1,6 +1,6 @@
 // src/app.controller.ts
-import { Controller, Get } from '@nestjs/common';
 import { AppService } from './app.service';
+import { Controller, Get, Post, Body } from '@nestjs/common';
 
 @Controller()
 export class AppController {
@@ -10,4 +10,5 @@ export class AppController {
   getHello(): string {
     return this.appService.getHello();
   }
+
 }

@@ -15,6 +15,9 @@ export class Friend {
 
   @Prop({ enum: ['approved', 'pending', 'deleted'], default: 'pending' })
   status: string;
+
+  @Prop({ type: Date, default: Date.now })
+  invitationSentAt: Date;
 }
 
 export const FriendSchema = SchemaFactory.createForClass(Friend);

@@ -6,7 +6,11 @@ import { NotificationService } from './notification.service';
 import { NotificationController } from './notification.controller';
 
 @Module({
-  imports: [MongooseModule.forFeature([{ name: Notification.name, schema: NotificationSchema }])],
+  imports: [
+    MongooseModule.forFeature([
+      { name: Notification.name, schema: NotificationSchema },
+    ]),
+  ],
   providers: [NotificationService],
   controllers: [NotificationController],
   exports: [NotificationService],

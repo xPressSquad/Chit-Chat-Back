@@ -1,23 +1,17 @@
-// src/app.module.ts
 import { Module } from '@nestjs/common';
-import { MongooseModule } from '@nestjs/mongoose';
-
-import { UserModule } from './user/user.module';
-import { ServerModule } from './server/server.module';
-import { MessageModule } from './message/message.module';
-import { NotificationModule } from './notification/notification.module';
-import { FriendModule } from './friend/friend.module';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
-
+import { ConfigModule } from '@nestjs/config';
+import { MongooseModule } from '@nestjs/mongoose';
+import { FriendModule } from "./friend/friend.module";
 @Module({
   imports: [
-    MongooseModule.forRoot('mongodb://localhost/nest'), // Replace with your MongoDB connection string
-    UserModule,
-    ServerModule,
-    MessageModule,
-    NotificationModule,
+    ConfigModule.forRoot({
+      envFilePath: '.env',
+      isGlobal: true,
+    }),
     FriendModule,
+    MongooseModule.forRoot(process.env.DB_URI),
   ],
   controllers: [AppController],
   providers: [AppService],

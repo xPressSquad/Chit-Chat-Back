@@ -1,13 +1,16 @@
-// src/friend/friend.module.ts
 import { Module } from '@nestjs/common';
 import { MongooseModule } from '@nestjs/mongoose';
 import { Friend, FriendSchema } from './friend.schema';
+import { User, UserSchema } from '../user/user.schema';
 import { FriendService } from './friend.service';
 import { FriendController } from './friend.controller';
 
 @Module({
   imports: [
-    MongooseModule.forFeature([{ name: Friend.name, schema: FriendSchema }]),
+    MongooseModule.forFeature([
+      { name: Friend.name, schema: FriendSchema },
+      { name: User.name, schema: UserSchema },
+    ]),
   ],
   providers: [FriendService],
   controllers: [FriendController],

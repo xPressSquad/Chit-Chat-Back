@@ -1,27 +1,136 @@
-// src/server/server.service.ts
-import { Injectable } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  BadRequestException,
+} from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { Server, ServerDocument } from './server.schema';
+import { CreateServerDto } from './dto/create-server.dto';
+import { UpdateServerDto } from './dto/update-server.dto';
+import * as fs from 'fs';
+import * as path from 'path';
 
 @Injectable()
 export class ServerService {
-  constructor(@InjectModel(Server.name) private serverModel: Model<ServerDocument>) {}
+  private readonly uploadsPath = path.join(process.cwd(), 'uploads', 'servers');
 
-  async findAll(): Promise<Server[]> {
-    return this.serverModel.find().exec();
+  constructor(@InjectModel(Server.name) private serverModel: Model<Server>) {
+    if (!fs.existsSync(this.uploadsPath)) {
+      fs.mkdirSync(this.uploadsPath, { recursive: true });
+    }
   }
 
-  async findOne(id: string): Promise<Server> {
-    return this.serverModel.findById(id).exec();
+  async createServer(createServerDto: CreateServerDto, file?: Express.Multer.File): Promise<Server> {
+    const existingServer = await this.serverModel
+      .findOne({ name: createServerDto.name })
+      .exec();
+
+    if (existingServer) {
+      if (file) {
+        this.deleteFile(file.filename);
+      }
+      throw new BadRequestException(`Server with name "${createServerDto.name}" already exists`);
+    }
+
+    const serverData = {
+      ...createServerDto,
+      cover: file ? `/uploads/servers/${file.filename}` : undefined,
+    };
+
+    const newServer = new this.serverModel(serverData);
+    return newServer.save();
   }
 
-  async create(serverData: Partial<Server>): Promise<Server> {
-    const server = new this.serverModel(serverData);
-    return server.save();
+  async getAllServers(page: number = 1, limit: number = 10) {
+    const skip = (page - 1) * limit;
+    const [servers, total] = await Promise.all([
+      this.serverModel
+        .find()
+        .skip(skip)
+        .limit(limit)
+        .sort({ createdAt: -1 })
+        .exec(),
+      this.serverModel.countDocuments(),
+    ]);
+
+    return {
+      data: servers.map(server => ({
+        ...server.toJSON(),
+        cover: server.cover ? `${process.env.API_URL || 'http://localhost:3000'}${server.cover}` : null
+      })),
+      meta: {
+        total,
+        page,
+        limit,
+        totalPages: Math.ceil(total / limit),
+      },
+    };
   }
 
-  async remove(id: string): Promise<Server> {
-    return this.serverModel.findByIdAndDelete(id);
+  async getServerById(id: string): Promise<Server> {
+    const server = await this.serverModel.findById(id).exec();
+    if (!server) {
+      throw new NotFoundException(`Server with ID "${id}" not found`);
+    }
+    return {
+      ...server.toJSON(),
+      cover: server.cover ? `${process.env.API_URL || 'http://localhost:3000'}${server.cover}` : null
+    };
+  }
+
+  async updateServer(
+    id: string, 
+    updateServerDto: UpdateServerDto, 
+    file?: Express.Multer.File
+  ): Promise<Server> {
+    const server = await this.serverModel.findById(id).exec();
+    if (!server) {
+      if (file) {
+        this.deleteFile(file.filename);
+      }
+      throw new NotFoundException(`Server with ID "${id}" not found`);
+    }
+
+    if (file) {
+      if (server.cover) {
+        this.deleteFile(server.cover.split('/').pop());
+      }
+      updateServerDto.cover = `/uploads/servers/${file.filename}`;
+    }
+
+    const updatedServer = await this.serverModel
+      .findByIdAndUpdate(id, updateServerDto, { new: true })
+      .exec();
+
+    return {
+      ...updatedServer.toJSON(),
+      cover: updatedServer.cover ? `${process.env.API_URL || 'http://localhost:3000'}${updatedServer.cover}` : null
+    };
+  }
+
+  async deleteServer(id: string): Promise<Server> {
+    const server = await this.serverModel.findById(id).exec();
+    if (!server) {
+      throw new NotFoundException(`Server with ID "${id}" not found`);
+    }
+
+    if (server.cover) {
+      this.deleteFile(server.cover.split('/').pop());
+    }
+
+    return this.serverModel.findByIdAndDelete(id).exec();
+  }
+
+  private deleteFile(filename: string): void {
+    try {
+      const fullPath = path.join(this.uploadsPath, filename);
+      if (fs.existsSync(fullPath)) {
+        fs.unlinkSync(fullPath);
+      }
+    } catch (error) {
+      console.error(`Error deleting file: ${error.message}`);
+    }
   }
 }
+

@@ -1,27 +1,93 @@
-// src/notification/notification.service.ts
 import { Injectable } from '@nestjs/common';
-import { InjectModel } from '@nestjs/mongoose';
-import { Model } from 'mongoose';
-import { Notification, NotificationDocument } from './notification.schema';
+import { Socket } from 'socket.io';
+import { CreateNotificationDto } from './dto/create-notification.dto';
+import { UpdateNotificationDto } from './dto/update-notification.dto';
 
 @Injectable()
 export class NotificationService {
-  constructor(@InjectModel(Notification.name) private notificationModel: Model<NotificationDocument>) {}
+  private clients: { [id: string]: Socket } = {};
+  private channels: { [channelId: string]: Set<Socket> } = {};
 
-  async findAll(): Promise<Notification[]> {
-    return this.notificationModel.find().exec();
+  authorizeClient(client: Socket) {
+    const clientId = client.id;
+    this.clients[clientId] = client;
   }
 
-  async findOne(id: string): Promise<Notification> {
-    return this.notificationModel.findById(id).exec();
+  handleClientDisconnect(client: Socket) {
+    const clientId = client.id;
+    
+    delete this.clients[clientId];
+
+    Object.keys(this.channels).forEach((channelId) => {
+      this.channels[channelId].delete(client);
+    });
   }
 
-  async create(notificationData: Partial<Notification>): Promise<Notification> {
-    const notification = new this.notificationModel(notificationData);
-    return notification.save();
+  joinChannel(client: Socket, channelId: string) {
+    if (!this.channels[channelId]) {
+      this.channels[channelId] = new Set();
+    }
+    this.channels[channelId].add(client);
+    
   }
 
-  async remove(id: string): Promise<Notification> {
-    return this.notificationModel.findByIdAndDelete(id);
+  leaveChannel(client: Socket, channelId: string) {
+    if (this.channels[channelId]) {
+      this.channels[channelId].delete(client);
+    }
+  }
+
+  sendNotification(notification: CreateNotificationDto) {
+    const { channelId, payload } = notification;
+    if (this.channels[channelId]) {
+      this.channels[channelId].forEach((client) => {
+        client.emit('notification', payload);
+      });
+    }
+  }
+
+  // get all notifications
+  findAllNotifications() {
+    // Return all notifications
+    return Object.values(this.channels).flatMap(channel => 
+      Array.from(channel).map(client => client.id)
+    );
+  }
+
+
+  updateNotification(id: string, updateNotificationDto: UpdateNotificationDto) {
+    // Update the notification and emit an update event
+  }
+
+  deleteNotification(id: string) {
+    // Delete the notification and emit a delete event
   }
 }
+
+
+// import { Injectable } from '@nestjs/common';
+// import { CreateNotificationDto } from './dto/create-notification.dto';
+// import { UpdateNotificationDto } from './dto/update-notification.dto';
+
+// @Injectable()
+// export class NotificationService {
+//   create(createNotificationDto: CreateNotificationDto) {
+//     return 'This action adds a new notification';
+//   }
+
+//   findAll() {
+//     return `This action returns all notification`;
+//   }
+
+//   findOne(id: number) {
+//     return `This action returns a #${id} notification`;
+//   }
+
+//   update(id: number, updateNotificationDto: UpdateNotificationDto) {
+//     return `This action updates a #${id} notification`;
+//   }
+
+//   remove(id: number) {
+//     return `This action removes a #${id} notification`;
+//   }
+// }

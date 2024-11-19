@@ -1,6 +1,7 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { HydratedDocument } from 'mongoose';
 import { ServerVisibility, ServerType } from './dto/create-server.dto';
+import { fa } from '@faker-js/faker/.';
 
 export type ServerDocument = HydratedDocument<Server>;
 
@@ -9,7 +10,7 @@ export class Server {
   @Prop({ required: true })
   name: string;
 
-  @Prop()
+  @Prop({ required: false })
   cover?: string;
 
   @Prop({ required: true })

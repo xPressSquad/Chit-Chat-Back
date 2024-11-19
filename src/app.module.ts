@@ -6,6 +6,7 @@
   import { ServerModule } from './server/server.module';
   import { ServeStaticModule } from '@nestjs/serve-static';
   import { join } from 'path';
+import { NotificationModule } from './notification/notification.module';
 
   @Module({
     imports: [
@@ -19,6 +20,7 @@
         rootPath: join(__dirname, '..', 'uploads'),
         serveRoot: '/uploads',
       }),
+      NotificationModule,
 
     ],
     controllers: [AppController],

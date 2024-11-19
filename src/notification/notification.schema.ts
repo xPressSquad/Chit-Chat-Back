@@ -1,19 +1,20 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import { Document } from 'mongoose';
+import { HydratedDocument } from 'mongoose';
+import * as mongoose from 'mongoose';
+import { User } from '../user/user.schema';
+
+export type NotificationDocument = HydratedDocument<Notification>;
 
 @Schema()
-export class Notification extends Document {
-  @Prop()
-  userId: string;
+export class Notification {
+  @Prop({ type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true })
+  user_id: User;
 
-  @Prop()
-  message: string;
+  @Prop({ required: true })
+  content: string;
 
-  @Prop()
-  read: boolean;
-
-  @Prop()
-  timestamp: Date;
+  @Prop({ enum: ['seen', 'new'], default: 'new' })
+  status: string;
 }
 
 export const NotificationSchema = SchemaFactory.createForClass(Notification);

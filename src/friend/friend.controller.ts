@@ -57,6 +57,7 @@ export class FriendController {
   async refuseInvitation(@Param('id') id: string)
   {
     try {
+
       return await this.friendService.RefuseInvitation(id);
     }catch (error)
     {

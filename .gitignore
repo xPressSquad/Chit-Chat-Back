@@ -2,6 +2,9 @@
 /dist
 /node_modules
 /build
+/src/seeders
+/src/seed.ts
+test.js
 
 # Logs
 logs

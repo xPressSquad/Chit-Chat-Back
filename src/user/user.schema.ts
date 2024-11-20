@@ -1,11 +1,15 @@
 // src/user/schemas/user.schema.ts
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import { HydratedDocument } from 'mongoose';
+import { Document } from 'mongoose';
 
-export type UserDocument = HydratedDocument<User>;
+enum UserStatus {
+  OFFLINE= 'offline',
+  ONLINE= 'online'
+}
 
 @Schema()
-export class User {
+export class User extends Document {
+
   @Prop({ required: true })
   name: string;
 
@@ -15,11 +19,12 @@ export class User {
   @Prop({ required: true })
   password: string;
 
-  @Prop({ enum: ['online', 'offline'], default: 'offline' })
-  status: string;
-
   @Prop()
-  image: string;
+  avatar: string; // Fixed typo from "avarar" to "avatar"
+
+  @Prop({ enum: UserStatus, default: UserStatus.OFFLINE })
+  status: UserStatus;
 }
 
+export type userDocument = User & Document;
 export const UserSchema = SchemaFactory.createForClass(User);

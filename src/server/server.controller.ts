@@ -11,17 +11,51 @@ import {
   UploadedFile,
   ParseIntPipe,
   DefaultValuePipe,
+  HttpException, 
+  HttpStatus,
+  UseGuards,
+  Request,
+  Inject
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { diskStorage } from 'multer';
 import { extname } from 'path';
-import { ServerService } from './server.service';
 import { CreateServerDto } from './dto/create-server.dto';
 import { UpdateServerDto } from './dto/update-server.dto';
+import { ServerService } from './server.service';
+import { Server } from './server.schema';
+import { ServerRepositoryInterface } from './interfaces/server.repository.interface';
+import { AuthGuard } from 'src/common/guards/auth.guard';
 
 @Controller('servers')
 export class ServerController {
-  constructor(private readonly serverService: ServerService) {}
+  constructor(
+    private readonly serverService: ServerService,
+    @Inject('ServerRepositoryInterface') private readonly serverRepository: ServerRepositoryInterface
+  ) {}
+
+  @Get('get/servers')
+  @UseGuards(AuthGuard)
+  async findAll(@Request() request): Promise<{statusCode: number , data: Server[]}> {
+    try{
+      
+      const userId = request.user._id;
+      const servers = await this.serverRepository.getUserServers(userId);
+      return {
+        statusCode: HttpStatus.OK,
+        data: servers
+      }
+    }catch(err: any){
+      throw new HttpException(
+        {
+          statusCode: HttpStatus.BAD_REQUEST,
+          message: 'Failed to get the users',
+          error: err.message,
+        },
+        HttpStatus.BAD_REQUEST,
+      );
+  }
+}
 
   @Post()
   @UseInterceptors(
@@ -84,13 +118,13 @@ export class ServerController {
   }
 
   // gell all servers
-  @Get()
-  async getAllServers(
-    @Query('page', new DefaultValuePipe(1), ParseIntPipe) page: number,
-    @Query('limit', new DefaultValuePipe(10), ParseIntPipe) limit: number
-  ) {
-    return this.serverService.getAllServers(page, limit);
-  }
+  // @Get()
+  // async getAllServers(
+  //   @Query('page', new DefaultValuePipe(1), ParseIntPipe) page: number,
+  //   @Query('limit', new DefaultValuePipe(10), ParseIntPipe) limit: number
+  // ) {
+  //   return this.serverService.getAllServers(page, limit);
+  // }
 
   // get server by id
   @Get(':id')

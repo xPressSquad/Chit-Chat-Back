@@ -1,7 +1,8 @@
 // src/message/message.controller.ts
-import { Controller, Get, Post, Body, Param, Delete } from '@nestjs/common';
+import { Controller, Get, Post, Body, Param, Delete, UsePipes, ValidationPipe } from '@nestjs/common';
 import { MessageService } from './message.service';
 import { Message } from './message.schema';
+import { CreateMessageDTO } from './dto/message.dto';
 
 @Controller('messages')
 export class MessageController {
@@ -17,10 +18,12 @@ export class MessageController {
     return this.messageService.findOne(id);
   }
 
-  @Post()
-  async create(@Body() createMessageDto: Partial<Message>): Promise<Message> {
-    return this.messageService.create(createMessageDto);
-  }
+  // @Post()
+  // @UsePipes(new ValidationPipe({ whitelist: true, forbidNonWhitelisted: true }))
+  // async create(@Body() createMessageDto: CreateMessageDTO): Promise<Message> {
+
+  //   return this.messageService.create(createMessageDto);
+  // }
 
   @Delete(':id')
   async remove(@Param('id') id: string): Promise<Message> {

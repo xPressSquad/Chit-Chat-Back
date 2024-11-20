@@ -5,7 +5,7 @@ import {
 } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
-import { Server, ServerDocument } from './server.schema';
+import { Server } from './server.schema';
 import { CreateServerDto } from './dto/create-server.dto';
 import { UpdateServerDto } from './dto/update-server.dto';
 import * as fs from 'fs';
@@ -42,31 +42,31 @@ export class ServerService {
     return newServer.save();
   }
 
-  async getAllServers(page: number = 1, limit: number = 10) {
-    const skip = (page - 1) * limit;
-    const [servers, total] = await Promise.all([
-      this.serverModel
-        .find()
-        .skip(skip)
-        .limit(limit)
-        .sort({ createdAt: -1 })
-        .exec(),
-      this.serverModel.countDocuments(),
-    ]);
+  // async getAllServers(page: number = 1, limit: number = 10) {
+  //   const skip = (page - 1) * limit;
+  //   const [servers, total] = await Promise.all([
+  //     this.serverModel
+  //       .find()
+  //       .skip(skip)
+  //       .limit(limit)
+  //       .sort({ createdAt: -1 })
+  //       .exec(),
+  //     this.serverModel.countDocuments(),
+  //   ]);
 
-    return {
-      data: servers.map(server => ({
-        ...server.toJSON(),
-        cover: server.cover ? `${process.env.API_URL || 'http://localhost:3000'}${server.cover}` : null
-      })),
-      meta: {
-        total,
-        page,
-        limit,
-        totalPages: Math.ceil(total / limit),
-      },
-    };
-  }
+  //   return {
+  //     data: servers.map(server => ({
+  //       ...server.toJSON(),
+  //       cover: server.cover ? `${process.env.API_URL || 'http://localhost:3000'}${server.cover}` : null
+  //     })),
+  //     meta: {
+  //       total,
+  //       page,
+  //       limit,
+  //       totalPages: Math.ceil(total / limit),
+  //     },
+  //   };
+  // }
 
   async getServerById(id: string): Promise<Server> {
     const server = await this.serverModel.findById(id).exec();

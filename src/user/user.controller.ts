@@ -1,29 +1,42 @@
 // src/user/user.controller.ts
-import { Controller, Get, Post, Body, Param, Delete } from '@nestjs/common';
-import { UserService } from './user.service';
-import { User } from './user.schema';
+import { Controller, Get, Param, Delete, Inject, HttpStatus, HttpException, UseGuards } from '@nestjs/common';
+import { UserRepositoryInterface } from './interfaces/user.repository.interface';
+import { userDocument } from './user.schema';
+import { AuthGuard } from '../common/guards/auth.guard';
+
 
 @Controller('users')
 export class UserController {
-  constructor(private readonly userService: UserService) {}
+  constructor(@Inject('UserRepositoryInterface') private readonly userRepository: UserRepositoryInterface) {}
 
-  @Get()
-  async findAll(): Promise<User[]> {
-    return this.userService.findAll();
+  @Get('/get/all')
+  @UseGuards(AuthGuard)
+  async findAll(): Promise<{ statusCode: number; data: userDocument[] }> {
+    try{
+      const users = await this.userRepository.getAllUsers();
+      return {
+        statusCode: HttpStatus.OK,
+        data: users
+      }
+    }catch(err:any){
+      throw new HttpException(
+        {
+          statusCode: HttpStatus.BAD_REQUEST,
+          message: 'Failed to get the users',
+          error: err.message,
+        },
+        HttpStatus.BAD_REQUEST,
+      );
+    }
   }
 
-  @Get(':id')
-  async findOne(@Param('id') id: string): Promise<User> {
-    return this.userService.findOne(id);
-  }
+  // @Get(':id')
+  // findOne(@Param('id') id: string) {
+  //   return this.userService.findOne(id);
+  // }
 
-  @Post()
-  async create(@Body() createUserDto: Partial<User>): Promise<User> {
-    return this.userService.create(createUserDto);
-  }
-
-  @Delete(':id')
-  async remove(@Param('id') id: string): Promise<User> {
-    return this.userService.remove(id);
-  }
+  // @Delete(':id')
+  // remove(@Param('id') id: string) {
+  //   return this.userService.remove(id);
+  // }
 }

@@ -4,6 +4,7 @@
 /build
 /src/seeders
 /src/seed.ts
+test.js
 
 # Logs
 logs

@@ -1,21 +1,22 @@
 // src/message/schemas/message.schema.ts
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import { Document } from 'mongoose';
+import { HydratedDocument, Types } from 'mongoose';
 
-export type MessageDocument = Message & Document;
+export type MessageDocument = HydratedDocument<Message>;
 
-@Schema()
+
+@Schema({ timestamps: true })
 export class Message {
-  @Prop({ required: true })
-  user_id: string;
+  @Prop({ type: Types.ObjectId, ref: 'User', required: true })
+  user_id: Types.ObjectId;
+
+  @Prop({ type: Types.ObjectId, ref: 'Server' , required: true })
+  server_id: Types.ObjectId;
 
   @Prop({ required: true })
-  server_id: string;
+  message: string
 
-  @Prop({ required: true })
-  date: Date;
-
-  @Prop({ required: true, enum: ['true', 'false'], default: 'false' })
+  @Prop({ enum: ['true', 'false'], default: 'false' })
   deleted: string;
 }
 

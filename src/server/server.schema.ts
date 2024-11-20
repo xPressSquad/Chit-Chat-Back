@@ -1,15 +1,13 @@
 // src/server/server.schema.ts
-import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { Document, Types } from 'mongoose';
+import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
+import { HydratedDocument } from 'mongoose';
+import { ServerVisibility, ServerType } from './dto/create-server.dto';
+import { fa } from '@faker-js/faker/.';
 
 enum Visibility {
   PUBLIC = 'public',
   PRIVATE = 'private'
-}
-
-enum ServerType {
-  GROUP = 'group',
-  DUO = 'duo'
 }
 
 @Schema()
@@ -22,13 +20,14 @@ class Members {
 }
 const MembersSchema = SchemaFactory.createForClass(Members);
 
-@Schema()
-export class Server extends Document {
+@Schema({ timestamps: true })
+
+export class Server {
   @Prop({ required: true })
   name: string;
 
-  @Prop()
-  cover: string;
+  @Prop({ required: false })
+  cover?: string;
 
   @Prop({ type: Types.ObjectId, ref: 'User', required: true })
   admin: Types.ObjectId;

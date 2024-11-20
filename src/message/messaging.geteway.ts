@@ -1,5 +1,5 @@
-import { Inject, Request, UseFilters, UseGuards, UsePipes, ValidationPipe } from "@nestjs/common";
-import { ConnectedSocket, MessageBody, SubscribeMessage, WebSocketGateway, WebSocketServer, WsException, OnGatewayConnection } from "@nestjs/websockets";
+import { Inject, UseFilters, UseGuards, UsePipes, ValidationPipe } from "@nestjs/common";
+import { ConnectedSocket, MessageBody, SubscribeMessage, WebSocketGateway, WebSocketServer, WsException, OnGatewayConnection, OnGatewayDisconnect } from "@nestjs/websockets";
 import { Server, Socket } from 'socket.io';
 import { CreateMessageDTO } from "./dto/message.dto";
 import { MessageRepositoryInterface } from "./interfaces/message.repository.interface";
@@ -8,16 +8,19 @@ import { AuthGuard } from "src/common/guards/auth.guard";
 import { AuthService } from "src/auth/auth.service";
 import { Types } from "mongoose";
 
-@WebSocketGateway({
+@WebSocketGateway(8000, {
     cors: {
         origin: '*',
         methods: ['GET', 'POST'],
         allowedHeaders: ['*'],
         credentials: true,
     },
+    transports: ['websocket'],
+    pingTimeout: 60000, // 60 seconds
+    pingInterval: 25000 
 })
 @UseFilters(new WebSocketExceptionFilter())
-export class MessageGeteway implements OnGatewayConnection {
+export class MessageGeteway implements OnGatewayConnection, OnGatewayDisconnect {
     @WebSocketServer()
     server: Server;
 
@@ -31,49 +34,71 @@ export class MessageGeteway implements OnGatewayConnection {
         const token = Array.isArray(client.handshake.query.token)
             ? client.handshake.query.token[0]
             : client.handshake.query.token;
-
         if (!token) {
             throw new WsException('No token provided');
         }
 
         try {
-            const user = this.jwtService.validateToken(token);  // Assuming token is in 'Bearer <token>'
-            client.data.user = user;  // Store user in socket connection data for later use
+            const user = this.jwtService.validateToken(token);  // Assuming token is in 'Bearer <token>'            
+            client.data.user = user; 
         } catch (error) {
-            throw new WsException('Invalid token');
+            throw new WsException('Invalid token'); 
         }
     }
 
+    handleDisconnect(client: any) {
+        console.log('Client disconnected:', client.id);
+    }
+
     @SubscribeMessage('sendMessage')
-    @UsePipes(new ValidationPipe({ whitelist: true, forbidNonWhitelisted: true }))
+    @UsePipes(new ValidationPipe({ 
+        transform: true,
+        whitelist: true,
+        forbidNonWhitelisted: true,
+        enableDebugMessages: true, 
+    }))
     async handleMessage(
         @MessageBody() createMessageDTO: CreateMessageDTO,
         @ConnectedSocket() client: Socket,
     ) {
         try {
+            if (!client.data?.user?._id) {
+                throw new WsException('User not authenticated');
+            }
+
             const validatedDto = {
                 ...createMessageDTO,
                 server_id: new Types.ObjectId(createMessageDTO.server_id)
             };
-            // Access the user information from client.data (set in handleConnection)
+
             const userId = new Types.ObjectId(client.data.user._id);
-            await this.messageRepository.createMessage(validatedDto, userId);
-            this.server.emit('messages', createMessageDTO);
+            const newMessage = await this.messageRepository.createMessage(validatedDto, userId);
+
+            // Emit the new message to all clients in the server
+            this.server.emit('newMessage', newMessage);
+
+            return { status: 'success', message: newMessage };
         } catch (err: any) {
-            throw new WsException('Failed to process message');
+            console.error('Message handling error:', err);
+            throw new WsException(err.message || 'Failed to process message');
         }
     }
 
     @SubscribeMessage('getMessages')
-    @UseGuards(AuthGuard)
     async handelGetMessages(
+        @MessageBody() data: { server_id: string },
         @ConnectedSocket() client: Socket
     ) {
         try {
-            const fetchedMessages = await this.messageRepository.getAllMessages();
-            this.server.emit('messages', fetchedMessages);
+            console.log('Fetching messages for server:', data.server_id);
+            const serverId = new Types.ObjectId(data.server_id);
+            const fetchedMessages = await this.messageRepository.getAllMessages(serverId);
+            client.emit('messages', fetchedMessages);
+            
+            return { status: 'success', messages: fetchedMessages };
         } catch (err: any) {
-            throw new WsException('Failed to process message');
+            console.error('Get messages error:', err);
+            throw new WsException(err.message || 'Failed to fetch messages');
         }
     }
 }

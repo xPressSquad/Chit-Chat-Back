@@ -27,9 +27,9 @@ export class MessageRepository implements MessageRepositoryInterface {
         }
     }
 
-    async getAllMessages(): Promise<Message[]> {
+    async getAllMessages(server_id: Types.ObjectId): Promise<Message[]> {
         try {
-            return await this.messageModel.find();
+            return await this.messageModel.find({ server_id: server_id });
         } catch (err: any) {
             throw err;
         }

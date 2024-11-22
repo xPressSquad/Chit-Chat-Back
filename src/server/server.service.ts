@@ -1,13 +1,19 @@
+
+// src/server/server.service.ts
+
 import {
   Injectable,
   NotFoundException,
   BadRequestException,
+  Inject, 
+  forwardRef,
 } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { Server, ServerDocument } from './server.schema';
 import { CreateServerDto } from './dto/create-server.dto';
 import { UpdateServerDto } from './dto/update-server.dto';
+import { UserService } from '../user/user.service';
 import * as fs from 'fs';
 import * as path from 'path';
 
@@ -15,7 +21,10 @@ import * as path from 'path';
 export class ServerService {
   private readonly uploadsPath = path.join(process.cwd(), 'uploads', 'servers');
 
-  constructor(@InjectModel(Server.name) private serverModel: Model<Server>) {
+  constructor(
+    @InjectModel(Server.name) private serverModel: Model<Server>,
+    @Inject(forwardRef(() => UserService)) private userService: UserService,
+  ) {
     if (!fs.existsSync(this.uploadsPath)) {
       fs.mkdirSync(this.uploadsPath, { recursive: true });
     }
@@ -68,6 +77,26 @@ export class ServerService {
     };
   }
 
+  async joinUser(serverId: string, userId: string): Promise<Server> {
+    const server = await this.serverModel.findById(serverId).exec();
+    if (!server) {
+      throw new Error('Server not found');
+    }
+    if ( server.members.find(u => u.member.toString() === userId) ) {
+      throw new Error('User already in server');
+    }
+    const user = await this.userService.findOne(userId);
+    server.members.push({
+      member: user,
+      status: 'active',
+    });
+    await server.save();
+    return server;
+  }
+
+  async remove(id: string): Promise<Server> {
+    return this.serverModel.findByIdAndDelete(id);
+  }
   async getServerById(id: string): Promise<Server> {
     const server = await this.serverModel.findById(id).exec();
     if (!server) {

@@ -17,13 +17,11 @@ export class UserController {
     return this.userService.findOne(id);
   }
 
-  @Post()
-  async create(@Body() createUserDto: Partial<User>): Promise<User> {
-    return this.userService.create(createUserDto);
-  }
-
   @Delete(':id')
   async remove(@Param('id') id: string): Promise<User> {
     return this.userService.remove(id);
   }
+
+  
+
 }

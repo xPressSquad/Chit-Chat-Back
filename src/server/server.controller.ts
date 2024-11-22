@@ -18,6 +18,7 @@ import { extname } from 'path';
 import { ServerService } from './server.service';
 import { CreateServerDto } from './dto/create-server.dto';
 import { UpdateServerDto } from './dto/update-server.dto';
+import { Server } from './server.schema';
 
 @Controller('servers')
 export class ServerController {
@@ -51,8 +52,6 @@ export class ServerController {
   
     return this.serverService.createServer(createServerDto, file);
   }
-
-  // ... other endpoints remain the same ...
 
   @Put(':id')
   @UseInterceptors(
@@ -105,5 +104,9 @@ export class ServerController {
     return this.serverService.deleteServer(id);
   }
 
+  @Get('/invite/:serverId/:userId')
+  async inviteToServer(@Param('userId') userId: string, @Param('serverId') serverId: string): Promise<Server> {
+    return this.serverService.joinUser(serverId, userId);
+  }
 
 }

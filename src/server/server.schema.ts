@@ -19,17 +19,19 @@ export class Server {
 
   @Prop([
     {
-      user_id: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
-      status: { type: String, enum: ['online', 'offline'], default: 'offline' },
+      user: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
+      status: { type: String, enum: ['active', 'pending'], default: 'pending' },
     },
   ])
-  users: Array<{ user_id: User; status: string }>;
+  users: Array<{ user: User; status: string }>;
 
-  @Prop()
-  visibility: boolean;
+  @Prop({ enum: ['public', 'private'], default: 'public' })
+  visibility: 'public' | 'private';
 
   @Prop({ enum: ['duo', 'group'], default: 'group' })
   type: string;
 }
+
+
 
 export const ServerSchema = SchemaFactory.createForClass(Server);

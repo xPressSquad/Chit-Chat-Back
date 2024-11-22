@@ -26,4 +26,9 @@ export class ServerController {
   async remove(@Param('id') id: string): Promise<Server> {
     return this.serverService.remove(id);
   }
+
+  @Get('/invite/:serverId/:userId')
+  async inviteToServer(@Param('userId') userId: string, @Param('serverId') serverId: string): Promise<Server> {
+    return this.serverService.joinUser(serverId, userId);
+  }
 }

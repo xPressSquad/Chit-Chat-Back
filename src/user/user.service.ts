@@ -1,12 +1,16 @@
-// src/user/user.service.ts                             
-import { Injectable } from '@nestjs/common';
+// src/user/user.service.ts
+import { Injectable, Inject, forwardRef } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
-import { User, UserDocument } from './user.schema';
+import { User } from './user.schema';
+import { ServerService } from '../server/server.service';
 
 @Injectable()
 export class UserService {
-  constructor(@InjectModel(User.name) private userModel: Model<UserDocument>) {}
+  constructor(
+    @InjectModel(User.name) private userModel: Model<User>,
+    @Inject(forwardRef(() => ServerService)) private serverService: ServerService,
+  ) {}
 
   async findAll(): Promise<User[]> {
     return this.userModel.find().exec();
@@ -16,9 +20,6 @@ export class UserService {
     return this.userModel.findById(id).exec();
   }
 
-  async inviteToServer(id: string, serverId: string): Promise<User> {
-    return 
-  }
 
   async create(userData: Partial<User>): Promise<User> {
     const user = new this.userModel(userData);

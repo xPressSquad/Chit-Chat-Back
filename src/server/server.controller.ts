@@ -53,8 +53,6 @@ export class ServerController {
     return this.serverService.createServer(createServerDto, file);
   }
 
-  // ... other endpoints remain the same ...
-
   @Put(':id')
   @UseInterceptors(
     FileInterceptor('cover', {

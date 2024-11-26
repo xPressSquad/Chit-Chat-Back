@@ -1,23 +1,24 @@
-# ChatApp Frontend: Real-Time Messaging Platform
+# ChatApp Backend: Real-Time Messaging Platform
 
 ## Overview
 
-ChatApp Frontend is the client-side interface for a real-time messaging platform built with **React.js**. It enables users to securely register, log in, create chat rooms, send messages, and interact with other users in real time using **WebSockets**.
+ChatApp Backend is built with **NestJS** and **Socket.IO** to provide the server-side logic for the real-time messaging platform. It handles user authentication, message storage, and real-time communication with clients using **WebSockets**. This backend serves as the API that the frontend communicates with to provide seamless, instant messaging features.
 
 ## Features
 
-- **User Registration & Authentication**: Secure user registration and login using JWT tokens.
-- **Real-time Messaging**: Instant message delivery through WebSockets.
-- **Private & Group Chats**: Supports both one-on-one and group chats.
-- **Typing Indicator**: Shows when users are typing in real time.
-- **Message Notifications**: Notifies users of new incoming messages.
-- **Profile Management**: Users can view and update their profile.
-- **Password Management**: Option to reset the user password.
+- **User Authentication**: Secure user login and registration using JWT tokens.
+- **WebSocket Communication**: Real-time messaging with WebSockets via **Socket.IO**.
+- **Private & Group Chat Management**: Allows for creating and managing private and group chats.
+- **Message Persistence**: Stores chat messages in the database for later retrieval.
+- **Password Management**: Users can reset their passwords securely.
+- **Environment Variables**: Configuration of the backend via environment variables for flexibility.
 
 ## Technology Stack
 
-- **Frontend**: React.js, Socket.IO (React), React Router, CSS
-- **Real-time Communication**: WebSockets using **Socket.IO** webrtc
+- **Backend**: NestJS
+- **Real-time Communication**: WebSockets (Socket.IO)
+- **Database**: MongoDb
+- **Environment Configuration**: `.env` for managing settings
 
 ## Installation
 
@@ -25,41 +26,23 @@ ChatApp Frontend is the client-side interface for a real-time messaging platform
 
 Ensure you have the following installed:
 - **Node.js** (version 14 or higher)
-- **npm**
+- **npm** (for managing packages)
+- **Database** (e.g., Mongodb)
 
 ### Steps
 
 1. **Clone the Repository:**
 
 ```bash
-git clone https://github.com/OSMaben/chatapp_frontend.git
-cd chatapp_frontend
+git clone https://github.com/OSMaben/chatapp_backend.git
+cd chatapp_backend
 ```
-
 
 2. **Install Project Dependencies:
-npm install
+   ```bash
+   npm install
 
 
-3. **Run the React Project:
+3. **Run the Backend Server
 ```bash
-npm start
-```
-
-
-## Contributing
-
-We welcome contributions! To contribute, please follow these steps:
-
-1. **Fork the repository** to your own GitHub account.
-2. **Create a new branch** for your changes. Use a descriptive name for your branch, e.g., `feature/your-feature-name` or `bugfix/your-bugfix`.
-3. **Make your changes** in the new branch. Ensure that your code works and passes any tests.
-4. **Test your changes locally** to make sure everything works as expected.
-5. **Commit your changes** with a clear and concise commit message that explains the changes you made.
-6. **Push your changes** to your forked repository.
-7. **Submit a pull request (PR)** from your fork to the main repository. In your PR, provide a detailed explanation of the changes you made and why they are needed.
-
-We will review your PR and, if everything looks good, merge it into the main branch.
-
-Thank you for your contribution!
-
+npm run start:dev
